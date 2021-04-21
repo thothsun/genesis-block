@@ -9,12 +9,13 @@ from construct import *
 def getGenesisBlock(time=int(time.time()),
                     pszTimestamp='The Times 03/Jan/2009 Chancellor on brink of second bailout for banks',
                     pubkey='045c13d245cfbe91faee1abc8edaa874cf9404eba4d280afed882d57f09c5deefdc6b49047b6e0595e7858a00b5da95a9448ea9b9784dd876dfe898c1bdca048cd',
+                    nonce=0,
                     bits=0x1d00ffff,
                     value=5000000000):
     print "start mining..."
     hashMerkleRoot = getHashMerkleRoot(pubkey, pszTimestamp, value)
-    blockHeader = createBlockHeader(hashMerkleRoot, time, bits)
-    genesisHash, nonce = tryToGetHash(blockHeader, bits)
+    blockHeader = createBlockHeader(hashMerkleRoot, time, bits, nonce)
+    genesisHash, nonce = tryToGetHash(blockHeader, bits, nonce)
 
     print "\r\n------input------"
     print "time: " + str(time)
@@ -68,7 +69,7 @@ def getHashMerkleRoot(pubkey,pszTimestamp,value):
     tx.locktime = 0
     return hashlib.sha256(hashlib.sha256(transaction.build(tx)).digest()).digest()
 
-def createBlockHeader(hashMerkleRoot, time, bits):
+def createBlockHeader(hashMerkleRoot, time, bits, nonce):
     blockHeader = Struct("block_header",
                          Bytes("version", 4),
                          Bytes("hash_prev_block", 32),
@@ -83,11 +84,10 @@ def createBlockHeader(hashMerkleRoot, time, bits):
     genesisblock.hash_merkle_root = hashMerkleRoot
     genesisblock.time = struct.pack('<I', time)
     genesisblock.bits = struct.pack('<I', bits)
-    genesisblock.nonce = struct.pack('<I', 0)
+    genesisblock.nonce = struct.pack('<I', nonce)
     return blockHeader.build(genesisblock)
 
-def tryToGetHash(blockData, bits):
-    nonce = 0
+def tryToGetHash(blockData, bits, nonce):
     target = (bits & 0xffffff) * 2 ** (8 * ((bits >> 24) - 3))
 
     while True:
@@ -102,5 +102,6 @@ if __name__ == '__main__':
     getGenesisBlock(time=1610105038,
                     pszTimestamp='Neubitcoin was created on 2021-01-06.  --sunshuai',
                     pubkey='045c13d245cfbe91faee1abc8edaa874cf9404eba4d280afed882d57f09c5deefdc6b49047b6e0595e7858a00b5da95a9448ea9b9784dd876dfe898c1bdca048cd',
+                    nonce=2,
                     bits=0x207fffff,
                     value=5000000000)
